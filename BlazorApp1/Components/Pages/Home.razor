@@ -1,0 +1,127 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@inject UserExperienceService ExperienceService
+@inject NavigationManager NavigationManager
+
+<link href="SiteCss.css" rel="stylesheet" />
+
+<div class="login-container">
+    <div class="card shadow-lg p-4">
+        <h2 class="text-center text-blue mb-4">Bienvenido al Diario de Videojuegos</h2>
+        
+        @if (!ShowRegisterForm)
+        {
+            <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                <div class="mb-3">
+                    <label for="username" class="form-label text-black">Usuario o Correo</label>
+                    <InputText id="username" class="form-control custom-input" @bind-Value="loginModel.UsernameOrEmail" />
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label text-black">Contraseña</label>
+                    <InputText id="password" type="password" class="form-control custom-input" @bind-Value="loginModel.Password" />
+                </div>
+                @if (!string.IsNullOrEmpty(ErrorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @ErrorMessage
+                    </div>
+                }
+                <button type="submit" class="btn btn-primary w-100">Iniciar Sesión</button>
+            </EditForm>
+            <div class="text-center mt-3">
+                <button class="btn btn-info" @onclick="ToggleRegisterForm">¿No tienes cuenta? Regístrate aquí</button>
+            </div>
+        }
+        else
+        {
+            <EditForm Model="@registerModel" OnValidSubmit="HandleRegister">
+                <div class="mb-3">
+                    <label for="register-username" class="form-label text-black">Usuario</label>
+                    <InputText id="register-username" class="form-control custom-input" @bind-Value="registerModel.Username" />
+                </div>
+                <div class="mb-3">
+                    <label for="register-email" class="form-label text-black">Correo</label>
+                    <InputText id="register-email" class="form-control custom-input" @bind-Value="registerModel.Email" />
+                </div>
+                <div class="mb-3">
+                    <label for="register-password" class="form-label text-black">Contraseña</label>
+                    <InputText id="register-password" type="password" class="form-control custom-input" @bind-Value="registerModel.Password" />
+                </div>
+                @if (!string.IsNullOrEmpty(RegisterMessage))
+                {
+                    <div class="alert alert-info" role="alert">
+                        @RegisterMessage
+                    </div>
+                }
+                <button type="submit" class="btn btn-success w-100">Registrarse</button>
+                <div class="text-center mt-3">
+                    <button class="btn btn-secondary" @onclick="ToggleRegisterForm">Volver al inicio de sesión</button>
+                </div>
+            </EditForm>
+        }
+    </div>
+</div>
+
+@code {
+    private LoginModel loginModel = new LoginModel();
+    private RegisterModel registerModel = new RegisterModel();
+    private string ErrorMessage = string.Empty;
+    private string RegisterMessage = string.Empty;
+    private bool ShowRegisterForm = false;
+
+    private async Task HandleLogin()
+    {
+        var user = await ExperienceService.LoginAsync(loginModel.UsernameOrEmail, loginModel.Password);
+        if (user != null)
+        {
+            // Redirigir al usuario a la vista de vivencias con su ID
+            NavigationManager.NavigateTo($"/vivencias/{user.Id}");
+        }
+        else
+        {
+            // Mostrar un mensaje de error al usuario
+            ErrorMessage = "Usuario o contraseña incorrectos. Por favor, verifica tus datos.";
+        }
+    }
+
+    private async Task HandleRegister()
+    {
+        var success = await ExperienceService.RegisterUserAsync(new User
+        {
+            Username = registerModel.Username,
+            Email = registerModel.Email,
+            Password = registerModel.Password
+        });
+
+        if (success)
+        {
+            RegisterMessage = "Usuario registrado exitosamente. ¡Ahora puedes iniciar sesión!";
+            // Limpiar el formulario de registro
+            registerModel = new RegisterModel();
+        }
+        else
+        {
+            RegisterMessage = "Hubo un error al registrar el usuario. Intenta de nuevo.";
+        }
+    }
+    private void ToggleRegisterForm()
+    {
+        ShowRegisterForm = !ShowRegisterForm;
+        // Limpiar mensajes al cambiar de formulario
+        ErrorMessage = string.Empty;
+        RegisterMessage = string.Empty;
+    }
+
+    private class LoginModel
+    {
+        public string UsernameOrEmail { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+
+    private class RegisterModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}

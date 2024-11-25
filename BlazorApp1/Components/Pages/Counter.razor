@@ -1,0 +1,131 @@
+﻿@page "/vivencias/{userId:int}"
+@rendermode InteractiveServer
+@inject UserExperienceService ExperienceService
+@inject NavigationManager NavigationManager
+
+<link href="SiteCss.css" rel="stylesheet" />
+
+<div class="container mt-4">
+    <h2 class="text-center text-blue">Mis Vivencias</h2>
+    <div class="d-flex justify-content-end mb-3">
+        <button class="btn btn-danger me-2" @onclick="ConfirmPanic">Botón de Pánico</button>
+        <button class="btn btn-secondary me-2" @onclick="ToggleNewExperienceForm">Nueva Vivencia</button>
+        <button class="btn btn-secondary" @onclick="Logout">Cerrar Sesión</button>
+    </div>
+
+    @if (showNewExperienceForm)
+    {
+        <div class="card mb-3 p-3">
+            <EditForm Model="@newExperience" OnValidSubmit="HandleNewExperience">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Título</label>
+                    <InputText id="title" class="form-control" @bind-Value="newExperience.Title" />
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Descripción</label>
+                    <InputTextArea id="description" class="form-control" @bind-Value="newExperience.Description" />
+                </div>
+                <div class="mb-3">
+                    <label for="imagePath" class="form-label">URL de Imagen</label>
+                    <InputText id="imagePath" class="form-control" @bind-Value="newExperience.ImagePath" />
+                </div>
+                <button type="submit" class="btn btn-success">Guardar</button>
+                <button type="button" class="btn btn-secondary ms-2" @onclick="ToggleNewExperienceForm">Cancelar</button>
+            </EditForm>
+        </div>
+    }
+
+    <div class="row">
+        @if (experiences == null)
+        {
+            <p class="text-center">Cargando vivencias...</p>
+        }
+        else if (!experiences.Any())
+        {
+            <p class="text-center">No tienes vivencias registradas. ¡Agrega una!</p>
+        }
+        else
+        {
+            @foreach (var exp in experiences)
+            {
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <img src="@exp.ImagePath" class="card-img-top" alt="Vivencia" />
+                        <div class="card-body">
+                            <h5 class="card-title">@exp.Title</h5>
+                            <p class="card-text">@exp.Description</p>
+                            <p class="card-text"><small class="text-muted">@exp.Date.ToShortDateString()</small></p>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int userId { get; set; }
+
+    private List<Experience>? experiences;
+    private Experience newExperience = new Experience { Date = DateTime.Now };
+    private bool showNewExperienceForm = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        experiences = await ExperienceService.GetUserExperiencesAsync(userId);
+    }
+
+    private void ToggleNewExperienceForm()
+    {
+        showNewExperienceForm = !showNewExperienceForm;
+        if (!showNewExperienceForm)
+        {
+            newExperience = new Experience { Date = DateTime.Now };
+        }
+    }
+
+    private async Task HandleNewExperience()
+    {
+        newExperience.UserId = userId; // Asignar el ID del usuario a la nueva vivencia
+        var success = await ExperienceService.AddExperienceAsync(newExperience);
+        if (success)
+        {
+            // Actualizar la lista de vivencias
+            experiences = await ExperienceService.GetUserExperiencesAsync(userId);
+            ToggleNewExperienceForm();
+        }
+        else
+        {
+            Console.WriteLine("Error al registrar la nueva vivencia.");
+        }
+    }
+
+
+    private async Task ConfirmPanic()
+    {
+        var password = await PromptPasswordAsync();
+        if (!string.IsNullOrEmpty(password))
+        {
+            var success = await ExperienceService.DeleteAllExperiencesAsync(userId, password);
+            if (success)
+            {
+                experiences = new List<Experience>();
+            }
+            else
+            {
+                Console.WriteLine("Contraseña incorrecta. No se pudo realizar la acción.");
+            }
+        }
+    }
+
+    private void Logout()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    private Task<string?> PromptPasswordAsync()
+    {
+        return Task.FromResult<string?>("clave_usuario_simulada");
+    }
+}

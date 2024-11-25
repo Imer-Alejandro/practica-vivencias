@@ -1,0 +1,47 @@
+body {
+    background-color: #002855; /* Azul Marino */
+}
+
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.card {
+    background-color: #ffffff; /* Blanco */
+    border-radius: 15px;
+    width: 100%;
+    max-width: 400px;
+    border: none;
+}
+
+.custom-input {
+    border: 2px solid #ffddc1; /* Crema */
+    border-radius: 8px;
+}
+
+.btn-cream {
+    background-color: #ffddc1; /* Crema */
+    color: #002855; /* Azul Marino */
+    font-weight: bold;
+    border: none;
+}
+
+.btn-cream:hover {
+    background-color: #ffc299; /* Crema Oscura */
+}
+
+.text-white {
+    color: #ffffff !important;
+}
+
+.text-cream {
+    color: #ffddc1;
+}
+
+.text-cream:hover {
+    text-decoration: underline;
+    color: #ffc299;
+}
